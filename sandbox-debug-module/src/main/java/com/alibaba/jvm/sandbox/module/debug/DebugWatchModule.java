@@ -1,5 +1,6 @@
 package com.alibaba.jvm.sandbox.module.debug;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.api.Module;
 import com.alibaba.jvm.sandbox.api.annotation.Command;
@@ -42,7 +43,7 @@ public class DebugWatchModule extends ParamSupported implements Module {
 
         final String cnPattern = getParameter(param, "class");
         final String mnPattern = getParameter(param, "method");
-        final String watchExpress = getParameter(param, "watch");
+        final String watchExpress = getParameter(param, "watch", "all");
         final List<Trigger> triggers = getParameters(
                 params,
                 "at",
@@ -96,10 +97,15 @@ public class DebugWatchModule extends ParamSupported implements Module {
                     }
 
                     private Bind binding(Advice advice) {
+                        String jParam = JSONUtil.toJsonPrettyStr(advice.getParameterArray());
                         return new Bind()
                                 .bind("class", advice.getBehavior().getDeclaringClass())
                                 .bind("method", advice.getBehavior())
                                 .bind("params", advice.getParameterArray())
+                                .bind("jparams", jParam)
+                                .bind("all",
+                                        String.format("%s > %s - %s:\n%s", advice.getTarget() == null ? "static" : advice.getTarget(), advice.getBehavior().getDeclaringClass(), advice.getBehavior().getName(), jParam)
+                                )
                                 .bind("target", advice.getTarget());
                     }
 
